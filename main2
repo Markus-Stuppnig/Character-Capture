@@ -1,0 +1,49 @@
+import numpy as np
+from PIL import Image
+import svgwrite
+
+def image_to_svg(image_path, output_path):
+    # Load the image
+    image = Image.open(image_path)
+
+    # Convert the image to grayscale
+    grayscale_image = image.convert("L")
+
+    # Convert the grayscale image to a numpy array
+    np_image = np.array(grayscale_image)
+
+    # Threshold the image to create a binary image
+    threshold = 1  # Adjust this threshold as per your image
+    binary_image = np.where(np_image > threshold, 255, 0).astype(np.uint8)
+
+    # Get the dimensions of the image
+    height, width = binary_image.shape
+
+    # Calculate the scaling factors
+    scale_x = image.width / width
+    scale_y = image.height / height
+
+    # Create an SVG drawing
+    dwg = svgwrite.Drawing(output_path, profile='tiny')
+
+    # Iterate over the pixels of the image
+    for y in range(height):
+        for x in range(width):
+            if binary_image[y, x] == 0:
+                # Calculate the scaled coordinates
+                scaled_x = x * scale_x
+                scaled_y = y * scale_y
+
+                # Add a rectangle element for each black pixel
+                dwg.add(dwg.rect(insert=(scaled_x, scaled_y), size=(scale_x, scale_y), fill="black"))
+
+    # Set the SVG viewBox to match the image size
+    dwg.viewbox(0, 0, image.width, image.height)
+
+    # Save the SVG drawing to a file
+    dwg.save()
+
+# Example usage
+image_path = "output.png"
+output_path = "output.svg"
+image_to_svg(image_path, output_path)
